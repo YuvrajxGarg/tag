@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Tag</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="splash" class="pywebview-drag-region">
+    <div class="glow"></div>
+    <span class="mark splash-mark" style="--size:76px"><span class="l">t</span><span class="l">a</span><span class="l">g</span><i class="strike"></i></span>
+  </div>
+
+  <div id="app">
+    <aside id="sidebar">
+      <div class="titlebar pywebview-drag-region"></div>
+      <div class="side-scroll">
+        <div class="card composer">
+          <button id="dropzone" class="dropzone">
+            <div class="dz-icon" data-icon="upload"></div>
+            <b>Drop photos or videos</b>
+            <span>JPG · PNG · WebP · MP4 · MOV · MKV · WebM</span>
+          </button>
+          <div class="row2">
+            <button class="btn-quiet" id="add-files"><i data-icon="file"></i>Add files</button>
+            <button class="btn-quiet" id="add-folder"><i data-icon="folder"></i>Add folder</button>
+          </div>
+
+          <div class="label">Save to</div>
+          <div class="tabs" id="out-mode">
+            <button data-mode="beside" class="on"><i data-icon="layers"></i>Beside originals</button>
+            <button data-mode="custom"><i data-icon="folder"></i>Choose folder</button>
+          </div>
+          <button class="custom-row hidden" id="custom-row" title="Change folder">
+            <i data-icon="folder"></i><span class="path" id="custom-path"></span><span class="change">Change</span>
+          </button>
+
+          <div class="progress hidden" id="progress"><div></div></div>
+          <button class="btn-primary" id="clean-btn" disabled><i data-icon="eraser"></i><span>Clean</span></button>
+        </div>
+      </div>
+
+      <footer id="footer">
+        <button class="frow" id="save-row"><i data-icon="folder"></i><span>Saving to</span><span class="path" id="save-path"></span></button>
+        <div class="frow" id="ffmpeg-note"></div>
+        <div class="frow brandrow">
+          <span class="mark" style="--size:13px;--knock:var(--sidebar)">tag<i class="strike"></i></span>
+          <span id="version"></span>
+          <button class="update-pill hidden" id="update-pill"></button>
+        </div>
+      </footer>
+    </aside>
+
+    <main id="content">
+      <div class="topbar pywebview-drag-region">
+        <div class="stats" id="stats"></div>
+        <div class="top-actions">
+          <button class="btn-quiet hidden" id="clear"><i data-icon="trash"></i>Clear</button>
+          <button class="btn-icon filled hidden" id="open-out" title="Show cleaned files"><i data-icon="folder"></i></button>
+          <button class="btn-icon filled" id="open-settings" title="Settings"><i data-icon="gear"></i></button>
+        </div>
+      </div>
+      <div id="list" class="list"></div>
+      <div id="empty" class="empty">
+        <div class="logomark lg"><span class="mark" style="--size:30px">tag<i class="strike"></i></span></div>
+        <h3>Drop photos or videos</h3>
+        <p>AI and Content Credential tags come off. Nothing is re-encoded.</p>
+      </div>
+    </main>
+  </div>
+
+  <div id="welcome" class="hidden"></div>
+  <div id="drop" class="hidden"><div class="drop-frame"></div><div class="drop-inner"><span class="mark" style="--size:54px">tag<i class="strike"></i></span>Drop to scan</div></div>
+  <div id="modal-root"></div>
+  <div id="toasts"></div>
+  <script src="app.js"></script>
+</body>
+</html>
