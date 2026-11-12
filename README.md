@@ -28,8 +28,8 @@ AI tools stamp their output with metadata, and platforms such as YouTube and Ins
 
 | Platform | Download | First launch |
 |---|---|---|
-| **macOS** 11+ · Apple silicon | [**Tag-mac.zip**](https://github.com/YuvrajxGarg/tag/releases/latest/download/Tag-mac.zip) | Unzip and move **Tag** to Applications. The app isn't notarized, so the first time: right-click → **Open**. On macOS 15 and later, go to **System Settings → Privacy & Security → Open Anyway** instead. |
-| **Windows** 10 / 11 · 64-bit | [**Tag-windows.zip**](https://github.com/YuvrajxGarg/tag/releases/latest/download/Tag-windows.zip) | Unzip the **Tag** folder somewhere you own (Documents, Desktop) and run **Tag.exe**. If SmartScreen appears, click **More info → Run anyway**. |
+| **macOS** 11+ · Apple silicon | [**Tag.dmg**](https://github.com/YuvrajxGarg/tag/releases/latest/download/Tag.dmg) | Open it and drag **Tag** to Applications. The app isn't notarized, so the first time: right-click → **Open**. On macOS 15 and later, go to **System Settings → Privacy & Security → Open Anyway** instead. |
+| **Windows** 10 / 11 · 64-bit | [**Tag-Setup.exe**](https://github.com/YuvrajxGarg/tag/releases/latest/download/Tag-Setup.exe) | Run the setup. It installs Tag for your account (no admin needed) and adds it to the Start menu. If SmartScreen appears, click **More info → Run anyway**. |
 
 ffmpeg comes bundled, so there's nothing else to install. Tag checks this repository for new releases and updates itself.
 
@@ -114,7 +114,7 @@ Tag.spec                  PyInstaller recipe for both platforms
    git tag v1.0.1 && git push origin v1.0.1
    ```
 
-3. The **Release** workflow builds, tests and smoke-tests both apps, then attaches `Tag-mac.zip` and `Tag-windows.zip` (each with a `.sha256`) to the release. Installed copies pick it up on their next update check.
+3. The **Release** workflow builds, tests and smoke-tests both apps, then attaches the installers (`Tag.dmg`, `Tag-Setup.exe`) and the update zips (`Tag-mac.zip`, `Tag-windows.zip`, each with a `.sha256`) to the release. Installed copies pick it up on their next update check.
 
 ## License
 
