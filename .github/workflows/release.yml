@@ -1,6 +1,9 @@
 # Builds Tag for macOS and Windows when a version tag (v1.2.3) is
-# pushed, and attaches the apps to that GitHub release. Installed copies check
-# the latest release for updates:
+# pushed, and attaches the apps to that GitHub release.
+# What people download (installer/ builds these):
+#   macOS   -> Tag.dmg          (drag to Applications)
+#   Windows -> Tag-Setup.exe    (setup wizard)
+# What installed copies update from (keep these: every existing install uses them):
 #   macOS   -> Tag-mac.zip      + .sha256
 #   Windows -> Tag-windows.zip  + .sha256
 name: Release
@@ -66,6 +69,9 @@ jobs:
           ditto -c -k --keepParent Tag.app Tag-mac.zip
           shasum -a 256 Tag-mac.zip > Tag-mac.zip.sha256
           cat Tag-mac.zip.sha256
+      - name: Disk image (macOS)
+        if: runner.os == 'macOS'
+        run: installer/build_mac.sh Tag && installer/test_mac.sh Tag
       - name: Package (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -75,10 +81,19 @@ jobs:
           $h = (Get-FileHash Tag-windows.zip -Algorithm SHA256).Hash.ToLower()
           "$h  Tag-windows.zip" | Out-File -Encoding ascii -NoNewline Tag-windows.zip.sha256
           Get-Content Tag-windows.zip.sha256
+      - name: Setup wizard (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          installer/build_windows.ps1 -App Tag -Version $env:TAG -Url https://github.com/YuvrajxGarg/tag
+          installer/test_windows.ps1 -App Tag -Smoke "python tests/smoke_app.py"
       - name: Upload to the release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$TAG" dist/Tag-*.zip dist/Tag-*.zip.sha256 --clobber
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then files="dist/Tag-mac.zip* dist/Tag.dmg*"
+          else files="dist/Tag-windows.zip* dist/Tag-Setup.exe*"; fi
+          gh release upload "$TAG" $files --clobber
 
   publish:
     needs: [build]
@@ -91,7 +106,7 @@ jobs:
         run: |
           assets=$(gh release view "$TAG" --json assets -q '.assets[].name')
           echo "$assets"
-          for a in Tag-mac.zip Tag-mac.zip.sha256 Tag-windows.zip Tag-windows.zip.sha256; do
+          for a in Tag-mac.zip Tag-mac.zip.sha256 Tag-windows.zip Tag-windows.zip.sha256 Tag.dmg Tag-Setup.exe; do
             echo "$assets" | grep -qx "$a" || { echo "missing $a, leaving the release as a draft"; exit 1; }
           done
           gh release edit "$TAG" --draft=false --latest
