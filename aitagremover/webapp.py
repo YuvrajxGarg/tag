@@ -69,19 +69,19 @@ def _thumb(path, kind):
 
 class Api(object):
     def __init__(self):
-        self.window = None
-        self.items = {}  # id -> dict
-        self.next_id = 1
-        self.lock = threading.Lock()
-        self.busy = False
-        self.settings = Settings()
-        self.updater = Updater(self.settings, lambda st: self._emit("update", st))
+        self._window = None
+        self._items = {}  # id -> dict
+        self._next_id = 1
+        self._lock = threading.Lock()
+        self._busy = False
+        self._settings = Settings()
+        self._updater = Updater(self._settings, lambda st: self._emit("update", st))
 
     # ---- helpers ---------------------------------------------------------
     def _emit(self, event, payload):
-        if self.window:
+        if self._window:
             try:
-                self.window.evaluate_js("window.App && App.on(%s, %s)" % (json.dumps(event), json.dumps(payload)))
+                self._window.evaluate_js("window.App && App.on(%s, %s)" % (json.dumps(event), json.dumps(payload)))
             except Exception:
                 pass
 
@@ -98,28 +98,28 @@ class Api(object):
     # ---- called from JS --------------------------------------------------
     def info(self):
         return {"version": __version__, "ffmpeg": bool(core.find_ffmpeg()), "platform": sys.platform,
-                "settings": self.settings.public(), "update": self.updater.state(),
+                "settings": self._settings.public(), "update": self._updater.state(),
                 "home": os.path.expanduser("~")}
 
     # settings
     def set_setting(self, key, value):
         if key in ("out_mode", "custom_dir", "open_after", "auto_check", "auto_install", "welcomed"):
-            self.settings.set(key, value)
-            if key == "auto_install" and value and self.updater.phase == "available":
-                threading.Thread(target=self.updater.stage_newest, daemon=True).start()
-        return self.settings.public()
+            self._settings.set(key, value)
+            if key == "auto_install" and value and self._updater.phase == "available":
+                threading.Thread(target=self._updater.stage_newest, daemon=True).start()
+        return self._settings.public()
 
     # updates
     def check_updates(self):
-        return self.updater.check(manual=True)
+        return self._updater.check(manual=True)
 
     def download_update(self):
-        threading.Thread(target=self.updater.stage_newest, daemon=True).start()
+        threading.Thread(target=self._updater.stage_newest, daemon=True).start()
 
     def install_update(self):
         def go():
-            if self.updater.install() == "open_page":
-                self.open_url(self.updater.state()["page"])
+            if self._updater.install() == "open_page":
+                self.open_url(self._updater.state()["page"])
         threading.Thread(target=go, daemon=True).start()
 
     def open_url(self, url):
@@ -130,35 +130,35 @@ class Api(object):
 
     def pick_files(self):
         exts = ";".join("*" + e for e in sorted(core.SUPPORTED_EXTS))
-        res = self.window.create_file_dialog(
+        res = self._window.create_file_dialog(
             webview.FileDialog.OPEN, allow_multiple=True,
             file_types=("Images and videos (%s)" % exts, "All files (*.*)"))
         if res:
             self.add_paths(list(res))
 
     def pick_folder(self):
-        res = self.window.create_file_dialog(webview.FileDialog.FOLDER)
+        res = self._window.create_file_dialog(webview.FileDialog.FOLDER)
         if res:
             self.add_paths([res[0] if isinstance(res, (list, tuple)) else res])
 
     def choose_output(self):
-        res = self.window.create_file_dialog(webview.FileDialog.FOLDER)
+        res = self._window.create_file_dialog(webview.FileDialog.FOLDER)
         if res:
             return res[0] if isinstance(res, (list, tuple)) else res
         return None
 
     def add_paths(self, paths):
         files = core.collect_files(paths)
-        known = {it["path"] for it in self.items.values()}
+        known = {it["path"] for it in self._items.values()}
         new = []
-        with self.lock:
+        with self._lock:
             for p in files:
                 if p in known:
                     continue
                 known.add(p)
-                it = {"id": self.next_id, "path": p, "size": _human(os.path.getsize(p)), "status": "scanning"}
-                self.items[self.next_id] = it
-                self.next_id += 1
+                it = {"id": self._next_id, "path": p, "size": _human(os.path.getsize(p)), "status": "scanning"}
+                self._items[self._next_id] = it
+                self._next_id += 1
                 new.append(it)
         if not files:
             self._emit("toast", {"text": "No supported images or videos there", "err": True})
@@ -179,21 +179,21 @@ class Api(object):
                     self._emit("upsert", self._public(it))
 
     def remove(self, item_id):
-        with self.lock:
-            self.items.pop(int(item_id), None)
+        with self._lock:
+            self._items.pop(int(item_id), None)
 
     def clear(self):
-        if not self.busy:
-            with self.lock:
-                self.items.clear()
+        if not self._busy:
+            with self._lock:
+                self._items.clear()
 
     def clean(self, mode, custom_dir):
-        if self.busy:
+        if self._busy:
             return
-        todo = [it for it in self.items.values() if it["status"] in ("ready", "failed", "warning")]
+        todo = [it for it in self._items.values() if it["status"] in ("ready", "failed", "warning")]
         if not todo:
             return
-        self.busy = True
+        self._busy = True
         threading.Thread(target=self._clean, args=(todo, mode, custom_dir), daemon=True).start()
 
     def _clean(self, todo, mode, custom_dir):
@@ -228,10 +228,10 @@ class Api(object):
                 it["error"] = str(e)
             self._emit("upsert", self._public(it))
             self._emit("progress", {"done": i + 1, "total": len(todo)})
-        self.busy = False
+        self._busy = False
         self._emit("busy", {"busy": False})
         self._emit("finished", {"ok": ok, "total": len(todo), "dir": last_dir})
-        if ok and last_dir and self.settings.get("open_after"):
+        if ok and last_dir and self._settings.get("open_after"):
             self.reveal(last_dir)
 
     def reveal(self, path):
@@ -304,7 +304,7 @@ def main():
         "Tag", url=os.path.join(UI_DIR, "index.html"), js_api=api,
         width=1120, height=720, min_size=(880, 580), background_color=BG, easy_drag=False,
     )
-    api.window = window
+    api._window = window
 
     def on_drop(e):
         files = (e.get("dataTransfer") or {}).get("files") or []
@@ -324,9 +324,9 @@ def main():
         finally:
             threading.Timer(3.0, lambda: os._exit(0)).start()
 
-    api.updater.on_quit_for_install = quit_for_install
-    window.events.closing += lambda: api.updater.install_on_quit()
-    window.events.loaded += lambda: api.updater.start()
+    api._updater.on_quit_for_install = quit_for_install
+    window.events.closing += lambda: api._updater.install_on_quit()
+    window.events.loaded += lambda: api._updater.start()
 
     if sys.platform == "darwin":
         window.events.before_show += lambda: _style_mac(window)
